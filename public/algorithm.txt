@@ -1,0 +1,80 @@
+//@version=5
+strategy("Martingale Strategy for Aptos/USDT", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=10)
+
+// Parameters for Martingale Strategy
+var float initial_position_size = 1       // Starting position size
+var float max_position_size = 64          // Maximum position size
+var float multiplier = 2.0                // Martingale multiplier
+var int max_rounds = 5                    // Maximum rounds before giving up
+
+// User-defined risk management
+stopLoss = input(50, "Stop Loss (in pips)") // Stop loss level
+takeProfit = input(100, "Take Profit (in pips)") // Take profit level
+
+// Define ATR for volatility filter
+atrPeriod = input(14, title="ATR Period")
+atrValue = ta.atr(atrPeriod)
+
+// Trading Logic (based on price crossover and volatility)
+longCondition = ta.crossover(close, ta.sma(close, 50)) and close > open
+shortCondition = ta.crossunder(close, ta.sma(close, 50)) and close < open
+
+// Martingale Logic: Track winning and losing trades
+var int round_counter = 0
+var float current_position_size = initial_position_size
+var bool in_trade = false
+var float last_entry_price = na
+var bool last_trade_was_loss = false
+
+// Helper function to calculate pip size (for Stop Loss and Take Profit)
+pipSize = syminfo.mintick * 10
+
+// Declare stop_loss_level and take_profit_level as float
+var float stop_loss_level = na
+var float take_profit_level = na
+
+// Open a new trade based on conditions
+if (longCondition and not in_trade)
+    strategy.entry("Long", strategy.long, qty=current_position_size)
+    in_trade := true
+    last_entry_price := close
+    round_counter := 1
+    last_trade_was_loss := false
+
+if (shortCondition and not in_trade)
+    strategy.entry("Short", strategy.short, qty=current_position_size)
+    in_trade := true
+    last_entry_price := close
+    round_counter := 1
+    last_trade_was_loss := false
+
+// Update trade logic: if stop loss or take profit is hit, check for win/loss
+if (in_trade)
+    // Calculate stop loss and take profit based on pip size for Long trades
+    if strategy.position_size > 0
+        stop_loss_level := last_entry_price - (stopLoss * pipSize)
+        take_profit_level := last_entry_price + (takeProfit * pipSize)
+    
+    // Check if Stop Loss is hit
+    if (strategy.position_size > 0 and close <= stop_loss_level)
+        strategy.close("Long")
+        in_trade := false
+        last_trade_was_loss := true
+
+    // Check if Take Profit is hit
+    if (strategy.position_size > 0 and close >= take_profit_level)
+        strategy.close("Long")
+        in_trade := false
+        last_trade_was_loss := false
+
+// Martingale Adjustment: Double the position size after a loss
+if (not in_trade and last_trade_was_loss)
+    round_counter := round_counter + 1
+    if (round_counter <= max_rounds and current_position_size < max_position_size)
+        current_position_size := current_position_size * multiplier
+    else
+        current_position_size := initial_position_size // Reset after reaching max rounds
+
+// Plot signals for visualization
+plotshape(series=longCondition, title="Buy Signal", location=location.belowbar, color=color.green, style=shape.labelup, text="BUY")
+plotshape(series=shortCondition, title="Sell Signal", location=location.abovebar, color=color.red, style=shape.labeldown, text="SELL")

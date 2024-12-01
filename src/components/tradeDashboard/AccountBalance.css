@@ -1,0 +1,56 @@
+.spin-on-hover {
+  animation: spin 2s linear infinite; /* Continuous spin */
+}
+
+.spin-on-hover:hover {
+  animation: none; /* Stop spinning on hover */
+}
+
+@keyframes spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.wallet-balance-item {
+  display: flex;
+  align-items: center;
+  margin-right: 8px; /* Adjust the gap between items */
+}
+
+.wallet-balance-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.account-balance-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Center align items */
+  flex-wrap: nowrap; /* Prevent wrapping */
+}
+
+.account-balance {
+  flex: 1;
+  min-width: 200px; /* Adjust as needed */
+}
+
+.changer-button {
+  margin-top: 16px;
+  align-self: flex-end;
+}
+
+@media (max-width: 768px) {
+  .account-balance-container {
+    flex-direction: row; /* Keep items in a row */
+    align-items: center; /* Center align items */
+  }
+
+  .changer-button {
+    align-self: center;
+    margin-top: 8px;
+  }
+}

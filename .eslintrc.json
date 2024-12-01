@@ -1,0 +1,8 @@
+{
+  "root": true,
+  "extends": ["@aptos-labs/eslint-config-adapter"],
+  "rules": {
+    // Override or disable any invalid rules if necessary
+    "no-invalid-options": "off" // Example rule, adjust based on your needs
+  }
+}
